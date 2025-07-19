@@ -6,22 +6,32 @@
 #define ROBOT_NAME "Anty"
 
 // Uncomment your variant.
-// #define PINS_KMS_2024 1 // Kaunas Makerspace Antweight Workshop October 2024
-#define PINS_KMS_2023 1 // Kaunas Makerspace Antweight Workshop September 2023
+#define PINS_KMS_2024 1 // Kaunas Makerspace Antweight Workshop October 2024
+// #define PINS_KMS_2023 1 // Kaunas Makerspace Antweight Workshop September 2023
 // #define PINS_NTA_2023 1 // No Trolls Allowed Antweight Workshop Summer 2023
 
 // Uncomment this if the red motor wire is on the left when looking from the back
-// #define KMS_2023_MOTOR_PINS_INVERT 1
+#define MOTOR_PINS_INVERT 1
 
 #ifdef PINS_KMS_2024
+  #ifndef MOTOR_PINS_INVERT
+    // MR & ML connected correctly (plus on PCB is red wire)
     #define PIN_MOTOR_IN1 27
     #define PIN_MOTOR_IN2 13
     #define PIN_MOTOR_IN3 26
     #define PIN_MOTOR_IN4 25
+  #else
+    // MR & ML connected incorrectly (plus on PCB is black wire)
+    #define PIN_MOTOR_IN1 13
+    #define PIN_MOTOR_IN2 27
+    #define PIN_MOTOR_IN3 25
+    #define PIN_MOTOR_IN4 26
+  #endif
+
     #define PIN_SERVO_1_SIG 32
     #define PIN_SERVO_2_SIG 23
 #elif PINS_KMS_2023
-  #ifndef KMS_2023_MOTOR_PINS_INVERT
+  #ifndef MOTOR_PINS_INVERT
     // MR & ML connected correctly (plus on PCB is red wire)
     #define PIN_MOTOR_IN1 26
     #define PIN_MOTOR_IN2 25
