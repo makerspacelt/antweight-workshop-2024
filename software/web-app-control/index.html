@@ -9,13 +9,15 @@
                 display: flex;
                 height: 100vh;
                 margin: 0; 
+                color: white;
                 background-color: black;
                 background-position-x: right;
                 background-position-y: 50%;
                 background-repeat: space;
                 background-size: cover;
                 background-image: url("bg.jpg"); /* image downloaded 2024-10-18 from https://wallpaperaccess.com/full/808550.jpg */
-                font-size: 16px;
+                font-family: monospace;
+                font-size: 14px;
                 user-select: none;
             }
             #joystick { display: block; margin: 2rem; }
@@ -63,11 +65,15 @@
                 z-index: 1000;
                 cursor: pointer;
             }
+            .invert-checkboxes {
+                display: inline-block;
+                color: orange;
+                margin-right: 10px;
+            }
             .cmd-status {
                 display: inline-block;
                 color: green;
-                font-family: monospace;
-                font-size: 14px;
+                white-space: pre-wrap;
             }
             @media screen and (orientation: portrait) {
                 body {
@@ -97,6 +103,13 @@
             <input type="range" value="0" min="0" max="180" step="1" id="servo-right">
         </div>
         <div class="buttons">
+            <span class="invert-checkboxes">
+                Invert:
+                <label><input id="invert-ml" type="checkbox">ML</label>
+                <label><input id="invert-mr" type="checkbox">MR</label>
+                <label><input id="invert-sl" type="checkbox">SL</label>
+                <label><input id="invert-sr" type="checkbox">SR</label>
+            </span>
             <span class="cmd-status">M0,0</span>
             <button disabled class="connect-btn btn" onclick="connectBLE()">Prisijungti</button>
             <button class="fullscreen-btn btn" title="Go fullscreen">
@@ -108,6 +121,12 @@
 const cmdStatusEl = document.querySelector('.cmd-status')
 const connectBtn = document.querySelector('.connect-btn')
 const debugEl = document.getElementById('debug')
+const invertCheckboxes = {
+    ML: document.getElementById('invert-ml'),
+    MR: document.getElementById('invert-mr'),
+    SL: document.getElementById('invert-sl'),
+    SR: document.getElementById('invert-sr'),
+}
 
 class BLERobot {
     BLE_SERVICE_UUID = "99b96fd7-dd0e-49cd-b255-f7b692c3de5e"
@@ -198,21 +217,23 @@ class BLERobot {
     }
 
     setSpeed(left, right) {
-        this.left = left
-        this.right = right
+        this.left = localStorage.invertML ? left * -1 : left
+        this.right = localStorage.invertMR ? right * -1 : right
     }
     
     setServoLeft(deg) {
-        this.servoLeft = deg
+        this.servoLeft = localStorage.invertSL ? (deg - 180) * -1 : deg
     }
     
     setServoRight(deg) {
-        this.servoRight = deg
+        this.servoRight = localStorage.invertSR ? (deg - 180) * -1 : deg
     }
 
     async _send() {
         const cmd = `ML${this.left} MR${this.right} SL${this.servoLeft} SR${this.servoRight}`
-        cmdStatusEl.textContent = cmd
+
+        const cmdStatus = `ML${this.left.toString().padStart(4, ' ')} MR${this.right.toString().padStart(4, ' ')} SL${this.servoLeft.toString().padStart(3, ' ')} SR${this.servoRight.toString().padStart(3, ' ')}`
+        cmdStatusEl.textContent = cmdStatus
 
         if (this.connected) {
             const data = this.encoder.encode(cmd);
@@ -359,6 +380,19 @@ function setupFullscreenControl() {
     fullscreenBtn.addEventListener('click', requestFullscreen)
 }
 
+function setupInvertButtons() {
+    function set(key, value) {
+        if (value) localStorage[key] = 1
+        else delete localStorage[key]
+    }
+    for (let key in invertCheckboxes) {
+        invertCheckboxes[key].checked = !!localStorage[`invert${key}`]
+        invertCheckboxes[key].onclick = function() {
+            set(`invert${key}`, this.checked)
+        }
+    }
+}
+
 function debug(...args) {
     const div = document.createElement('div')
     txt = args.map(a => a === undefined ? 'undefined' : (a === null ? 'null' : a.valueOf())).join('  ')
@@ -382,6 +416,7 @@ checkRequirements()
 setupServoControl(robot)
 setupJoystick(robot)
 setupFullscreenControl()
+setupInvertButtons()
 
 window.addEventListener("beforeunload", (event) => {
     robot.disconnect()
