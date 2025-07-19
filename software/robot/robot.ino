@@ -6,14 +6,26 @@
 #define ROBOT_NAME "Anty"
 
 // Uncomment your variant.
-#define PINS_KMS_2024 1 // Kaunas Makerspace Antweight Workshop October 2024
+#define PINS_NTA_2025 1 // Kaunas Makerspace Antweight Workshop October 2024
+// #define PINS_KMS_2024 1 // Kaunas Makerspace Antweight Workshop October 2024
 // #define PINS_KMS_2023 1 // Kaunas Makerspace Antweight Workshop September 2023
 // #define PINS_NTA_2023 1 // No Trolls Allowed Antweight Workshop Summer 2023
 
 // Uncomment this if the red motor wire is on the left when looking from the back
-#define MOTOR_PINS_INVERT 1
+/* #define MOTOR_PINS_INVERT 1 */
 
-#ifdef PINS_KMS_2024
+#ifdef PINS_NTA_2025
+  #ifndef MOTOR_PINS_INVERT
+    // MR & ML connected correctly (plus on PCB is red wire)
+    #define PIN_MOTOR_IN1 13
+    #define PIN_MOTOR_IN2 27
+    #define PIN_MOTOR_IN3 26
+    #define PIN_MOTOR_IN4 25
+  #endif
+
+    #define PIN_SERVO_1_SIG 32
+    #define PIN_SERVO_2_SIG 23 
+#elif PINS_KMS_2024
   #ifndef MOTOR_PINS_INVERT
     // MR & ML connected correctly (plus on PCB is red wire)
     #define PIN_MOTOR_IN1 27
@@ -105,7 +117,7 @@ class MyBLECallbacks : public BLECharacteristicCallbacks {
     String value = pCharacteristic->getValue();
     if (value.length() > 0) {
       sscanf(value.c_str(), "ML%d MR%d SL%d SR%d", &spd_left, &spd_right, &servo2_deg, &servo1_deg);
-      
+
       Serial.print("New speed values: L=");
       Serial.print(spd_left);
       Serial.print(" R=");
@@ -114,7 +126,7 @@ class MyBLECallbacks : public BLECharacteristicCallbacks {
       Serial.print(servo2_deg);
       Serial.print(" SR=");
       Serial.print(servo1_deg);
-      Serial.println();
+      Serial.println(); 
     }
   }
 };
@@ -129,11 +141,11 @@ void setup_pwm() {
 void setup_servo() {
 #ifdef PIN_SERVO_1_SIG
   servo1.setPeriodHertz(50);// Standard 50Hz servo
-  servo1.attach(PIN_SERVO_1_SIG, 500, 2400);
+  servo1.attach(PIN_SERVO_1_SIG, 400, 2400);
 #endif
 #ifdef PIN_SERVO_2_SIG
   servo2.setPeriodHertz(50);// Standard 50Hz servo
-  servo2.attach(PIN_SERVO_2_SIG, 500, 2400);
+  servo2.attach(PIN_SERVO_2_SIG, 400, 2400);
 #endif
 }
 
@@ -181,10 +193,10 @@ void set_speed_right(int spd) {
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("PWM setup...");
-  setup_pwm();
   Serial.println("Servo setup...");
   setup_servo();
+  Serial.println("PWM setup...");
+  setup_pwm();
   Serial.println("BLE setup...");
   setup_ble();
   Serial.println("Ready!");
@@ -193,17 +205,19 @@ void setup() {
 void loop() {
   set_speed_left(constrain(spd_left, -255, 255));
   set_speed_right(constrain(spd_right, -255, 255));
-
+    
 #ifdef PIN_SERVO_1_SIG
+  servo1_deg = constrain(servo1_deg, 0, 180);
   if (servo1_deg_last != servo1_deg) {
-    servo1.write(constrain(servo1_deg, 0, 180));
+    servo1.write(servo1_deg);
     servo1_deg_last = servo1_deg;
   }
 #endif
 
 #ifdef PIN_SERVO_2_SIG
+  servo2_deg = constrain(servo2_deg, 0, 180);
   if (servo2_deg_last != servo2_deg) {
-    servo2.write(constrain(servo2_deg, 0, 180));
+    servo2.write(servo2_deg);
     servo2_deg_last = servo2_deg;
   }
 #endif

@@ -2,6 +2,7 @@ NAME=Anty
 PORT=/dev/ttyUSB0
 
 deps:
+	arduino-cli core install esp32:esp32
 	arduino-cli lib install ESP32Servo
 
 build:
