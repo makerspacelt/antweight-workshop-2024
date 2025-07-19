@@ -7,7 +7,8 @@ soldering & robotics to beginners. It's fun to assemble in a group and then
 fight in an arena. The robot follows Lithuanian Antweight format - 200 g weight.
 
 The robot is controlled via a website, which uses the Web Bluetooth API to connect to ESP32.
-Best results with Google Chrome, works only in Android or laptops.
+Best results with Google Chrome, works only in Android or laptops. Access the
+website here: https://makerspace.lt/antweight-workshop-2024/
 
 Total cost of everything (if you source 1 cell lithium battery yourself) - around 15eur.
 
