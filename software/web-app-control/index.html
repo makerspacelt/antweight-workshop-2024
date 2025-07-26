@@ -5,6 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>KMS Antweight Control 2024</title>
         <style>
+            html, body {
+                overscroll-behavior: none;
+                touch-action: none; /* Prevents scrolling and gestures */
+            }
             body {
                 display: flex;
                 height: 100vh;
@@ -20,7 +24,7 @@
                 font-size: 14px;
                 user-select: none;
             }
-            #joystick { display: block; margin: 2rem; }
+            #joystick { display: block; margin: 2rem; touch-action: none; }
             #servo-left, #servo-right {
                 position: absolute;
                 top: 30vh;
