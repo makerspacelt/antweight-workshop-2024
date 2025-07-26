@@ -1,73 +1,68 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KMS Antweight Control 2024</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Robot Tank Controller</title>
     <style>
         html, body {
             overscroll-behavior: none;
-            touch-action: none; /* Prevents scrolling and gestures */
-        }
-        body {
-            display: flex;
-            height: 100vh;
+            touch-action: none;
             margin: 0;
-            color: white;
-            background-color: black;
-            background-position-x: right;
-            background-position-y: 50%;
-            background-repeat: space;
-            background-size: cover;
-            background-image: url("bg.jpg"); /* image downloaded 2024-10-18 from https://wallpaperaccess.com/full/808550.jpg */
+            height: 100vh;
+            background: black;
             font-family: monospace;
-            font-size: 14px;
-            user-select: none;
-        }
-        #joystick { display: block; margin: 2rem; touch-action: none; }
-        #servo-left, #servo-right {
-            position: absolute;
-            top: 30vh;
-            right: 60px;
-            height: 60vh;
-            writing-mode: vertical-lr;
-        }
-        #servo-left {
-            right: 140px;
+            color: white;
         }
         #debug {
-            flex-grow: 1;
-            padding: 1rem;
-            padding-top: 3rem;
-            overflow: auto;
-            color: green;
-            font-family: monospace;
-            word-break: break-all;
-            margin-right: 30px;
-        }
-        #debug > * {
-            display: list-item;
-            list-style-type: disc;
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            width: 40%;
+            max-height: 90vh;
+            overflow-y: auto;
             font-size: 14px;
+            color: green;
         }
-        svg {
-            width: 1em;
-            height: 1em;
-            vertical-align: -0.125em;
-            fill: white;
+        #servo-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
         }
-        .buttons { position: absolute; top: 10px; right: 10px; z-index: 1000; }
+        #servo-controls input {
+            writing-mode: vertical-lr;
+            height: 30vh;
+        }
+        #joystick-zone {
+            position: absolute;
+            width: 30vh;
+            height: 30vh;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        @media screen and (orientation: landscape) {
+            #joystick-zone {
+                left: auto;
+                right: 20px;
+                transform: none;
+            }
+        }
+        .buttons {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
         .buttons > button {
             height: 2rem;
-            display: inline-block;
             padding: 0 5px;
             margin: 0 5px;
             font-size: large;
             font-weight: bold;
             background: black;
             color: #fff;
-            z-index: 1000;
             cursor: pointer;
         }
         .invert-checkboxes {
@@ -80,388 +75,250 @@
             color: green;
             white-space: pre-wrap;
         }
-        @media screen and (orientation: portrait) {
-            body {
-                flex-direction: column-reverse;
-            }
-            #servo-left {
-                right: 60px;
-            }
-            #servo-right {
-                right: 20px;
-            }
-            #servo-left, #servo-right {
-                top: 150px;
-                height: 30vh;
-            }
-            #debug {
-                margin-right: 70px;
-            }
-        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.9.0/nipplejs.min.js"></script>
 </head>
 <body>
-<canvas id="joystick"></canvas>
+
 <div id="debug"></div>
+
 <div id="servo-controls">
     <input type="range" value="0" min="0" max="180" step="1" id="servo-left">
     <input type="range" value="0" min="0" max="180" step="1" id="servo-right">
 </div>
+
+<div id="joystick-zone"></div>
+
 <div class="buttons">
-            <span class="invert-checkboxes">
-                Invert:
-                <label><input id="invert-ml" type="checkbox">ML</label>
-                <label><input id="invert-mr" type="checkbox">MR</label>
-                <label><input id="invert-sl" type="checkbox">SL</label>
-                <label><input id="invert-sr" type="checkbox">SR</label>
-            </span>
+    <span class="invert-checkboxes">
+        Invert:
+        <label><input id="invert-ml" type="checkbox">ML</label>
+        <label><input id="invert-mr" type="checkbox">MR</label>
+        <label><input id="invert-sl" type="checkbox">SL</label>
+        <label><input id="invert-sr" type="checkbox">SR</label>
+    </span>
     <span class="cmd-status">M0,0</span>
     <button disabled class="connect-btn btn" onclick="connectBLE()">Prisijungti</button>
-    <button class="fullscreen-btn btn" title="Go fullscreen">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z"/></svg>
-    </button>
 </div>
 
 <script>
-    const cmdStatusEl = document.querySelector('.cmd-status')
-    const connectBtn = document.querySelector('.connect-btn')
-    const debugEl = document.getElementById('debug')
+    const cmdStatusEl = document.querySelector('.cmd-status');
+    const connectBtn = document.querySelector('.connect-btn');
+    const debugEl = document.getElementById('debug');
     const invertCheckboxes = {
         ML: document.getElementById('invert-ml'),
         MR: document.getElementById('invert-mr'),
         SL: document.getElementById('invert-sl'),
         SR: document.getElementById('invert-sr'),
-    }
+    };
 
     class BLERobot {
-        BLE_SERVICE_UUID = "99b96fd7-dd0e-49cd-b255-f7b692c3de5e"
-        BLE_CHARACTERISTIC_UUID = "4fce1dff-9151-498f-aa72-581f3f9241f3"
+        BLE_SERVICE_UUID = "99b96fd7-dd0e-49cd-b255-f7b692c3de5e";
+        BLE_CHARACTERISTIC_UUID = "4fce1dff-9151-498f-aa72-581f3f9241f3";
 
         constructor() {
-            this.name = ''
-            this.left = 0
-            this.right = 0
-            this.servoLeft = 0
-            this.servoRight = 0
-            this.periodicReconnectTimer = null
-
-            this.encoder = new TextEncoder()
-
-            this._connected = false
-            this._periodicSending()
+            this.name = '';
+            this.left = 0;
+            this.right = 0;
+            this.servoLeft = 0;
+            this.servoRight = 0;
+            this.periodicReconnectTimer = null;
+            this.encoder = new TextEncoder();
+            this._connected = false;
+            this._periodicSending();
         }
 
         async _connect() {
-            const server = await this.device.gatt.connect()
-            this.service = await server.getPrimaryService(this.BLE_SERVICE_UUID)
-            this.characteristic = await this.service.getCharacteristic(this.BLE_CHARACTERISTIC_UUID)
-            this.server = server
-            debugClear()
-            debug(`Prisijungiau prie roboto „${this.device.name}“`)
-            this.name = this.device.name
-            connectBtn.textContent = this.name
-            this._connected = true
+            const server = await this.device.gatt.connect();
+            this.service = await server.getPrimaryService(this.BLE_SERVICE_UUID);
+            this.characteristic = await this.service.getCharacteristic(this.BLE_CHARACTERISTIC_UUID);
+            this.server = server;
+            debugClear();
+            debug(`Prisijungiau prie roboto „${this.device.name}“`);
+            this.name = this.device.name;
+            connectBtn.textContent = this.name;
+            this._connected = true;
         }
 
         async _periodicReconnect(name) {
-            if (name != this.name) return
+            if (name !== this.name) return;
             try {
-                await this._connect()
+                await this._connect();
             } catch (e) {
-                if (name != this.name) return
-                debug(`Nepavyko prisijungti prie roboto „${this.device.name}“, dar bandysiu po 1s`)
-                this.periodicReconnectTimer = setTimeout(() => this._periodicReconnect(), 1000)
+                if (name !== this.name) return;
+                debug(`Nepavyko prisijungti prie roboto „${this.device.name}“, bandysiu vėl po 1s`);
+                this.periodicReconnectTimer = setTimeout(() => this._periodicReconnect(name), 1000);
             }
         }
 
         async _periodicSending() {
-            let delay = 0
+            let delay = 0;
             try {
-                if (!await this._send()) {
-                    // not connected, slow down
-                    delay = 100
-                }
-            }
-            catch (e) {
-                debug('Klaida siunčiant komandą: ', e)
-            }
-            finally {
-                setTimeout(() => this._periodicSending(), delay)
+                if (!await this._send()) delay = 100;
+            } catch (e) {
+                debug('Klaida siunčiant komandą:', e);
+            } finally {
+                setTimeout(() => this._periodicSending(), delay);
             }
         }
 
         async connect() {
             try {
-                clearTimeout(this.periodicReconnectTimer)
+                clearTimeout(this.periodicReconnectTimer);
                 this.device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [this.BLE_SERVICE_UUID] }],
-                    // acceptAllDevices: true,
-                    // optionalServices: [this.BLE_SERVICE_UUID],
-                })
+                    filters: [{ services: [this.BLE_SERVICE_UUID] }]
+                });
                 this.device.addEventListener('gattserverdisconnected', () => {
-                    this._connected = false
-                    connectBtn.textContent = 'jungiamės...'
-                    this._periodicReconnect(this.name)
-                })
-                await this._connect()
+                    this._connected = false;
+                    connectBtn.textContent = 'jungiamės...';
+                    this._periodicReconnect(this.name);
+                });
+                await this._connect();
             } catch (e) {
-                debug('Klaida jungiantis prie roboto:', e)
+                debug('Klaida jungiantis prie roboto:', e);
             }
         }
 
         get connected() {
-            return this._connected && this.server?.connected
+            return this._connected && this.server?.connected;
         }
 
         disconnect() {
-            clearTimeout(this.periodicReconnectTimer)
-            connectBtn.textContent = 'Prisijungti'
-            if (this.connected) {
-                this.server?.disconnect()
-            }
+            clearTimeout(this.periodicReconnectTimer);
+            connectBtn.textContent = 'Prisijungti';
+            if (this.connected) this.server?.disconnect();
         }
 
         setSpeed(left, right) {
-            this.left = localStorage.invertML ? left * -1 : left
-            this.right = localStorage.invertMR ? right * -1 : right
+            this.left = localStorage.invertML ? left * -1 : left;
+            this.right = localStorage.invertMR ? right * -1 : right;
         }
 
         setServoLeft(deg) {
-            this.servoLeft = localStorage.invertSL ? (deg - 180) * -1 : deg
+            this.servoLeft = localStorage.invertSL ? (deg - 180) * -1 : deg;
         }
 
         setServoRight(deg) {
-            this.servoRight = localStorage.invertSR ? (deg - 180) * -1 : deg
+            this.servoRight = localStorage.invertSR ? (deg - 180) * -1 : deg;
         }
 
         async _send() {
-            const cmd = `ML${this.left} MR${this.right} SL${this.servoLeft} SR${this.servoRight}`
-
-            const cmdStatus = `ML${this.left.toString().padStart(4, ' ')} MR${this.right.toString().padStart(4, ' ')} SL${this.servoLeft.toString().padStart(3, ' ')} SR${this.servoRight.toString().padStart(3, ' ')}`
-            cmdStatusEl.textContent = cmdStatus
+            const cmd = `ML${this.left} MR${this.right} SL${this.servoLeft} SR${this.servoRight}`;
+            const cmdStatus = `ML${this.left.toString().padStart(4, ' ')} MR${this.right.toString().padStart(4, ' ')} SL${this.servoLeft.toString().padStart(3, ' ')} SR${this.servoRight.toString().padStart(3, ' ')}`;
+            cmdStatusEl.textContent = cmdStatus;
 
             if (this.connected) {
                 const data = this.encoder.encode(cmd);
-                await this.characteristic.writeValue(data)
-                return true
+                await this.characteristic.writeValue(data);
+                return true;
             }
-            return false
+            return false;
         }
-    }
-
-    async function checkRequirements() {
-        if (!navigator.bluetooth) {
-            debug("Jūsų naršyklė nepalaiko Bluetooth. Pabandykite su Google Chrome.")
-            return
-        }
-        if (!await navigator.bluetooth.getAvailability()) {
-            debug("Nerastas Bluetooth įrenginys arba trūksta leidimo jį naudoti.")
-            return
-        }
-        connectBtn.disabled = false
-        debug("Labas! Spausk „Prisijungti“ ir prisijunk prie savo roboto.")
     }
 
     function setupJoystick(robot) {
-        const joystick = document.getElementById('joystick');
-        const ctx = joystick.getContext('2d');
+        const manager = nipplejs.create({
+            zone: document.getElementById('joystick-zone'),
+            mode: 'static',
+            position: { right: '20px', bottom: '20px' },
+            color: 'white',
+            size: 150,
+            restOpacity: 0.3,
+        });
 
-        let radius, radiusDot, radiusToEdge;
+        manager.on('move', (evt, data) => {
+            if (!data || !data.vector) return;
 
-        function updateBaseParams() {
-            const sidePx = Math.min(window.innerWidth, window.innerHeight);
-            joystick.width = sidePx;
-            joystick.height = sidePx;
-            radius = sidePx / 2;
-            radiusDot = radius / 4;
-            radiusToEdge = radius - radiusDot;
-        }
+            const distance = Math.min(data.distance, 1); // limit max range
+            const angle = data.angle.radian;
+            let jx = Math.cos(angle) * distance;
+            let jy = -Math.sin(angle) * distance; // invert Y manually
 
-        function getCenter() {
-            return {
-                x: joystick.width / 2,
-                y: joystick.height / 2
-            };
-        }
-
-        function drawJoystick(indicatorX, indicatorY) {
-            const { x: centerX, y: centerY } = getCenter();
-
-            ctx.clearRect(0, 0, joystick.width, joystick.height);
-
-            // Outer circle
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radiusToEdge, 0, Math.PI * 2);
-            ctx.fillStyle = 'white';
-            ctx.fill();
-            ctx.closePath();
-
-            // Red dot
-            ctx.beginPath();
-            ctx.arc(indicatorX ?? centerX, indicatorY ?? centerY, radiusDot, 0, Math.PI * 2);
-            ctx.fillStyle = 'red';
-            ctx.fill();
-            ctx.closePath();
-        }
-
-        function updateJoystick(eventX, eventY) {
-            const rect = joystick.getBoundingClientRect();
-            const x = eventX - rect.left;
-            const y = eventY - rect.top;
-
-            const { x: centerX, y: centerY } = getCenter();
-            const dx = x - centerX;
-            const dy = y - centerY;
-
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const clampedDistance = Math.min(radiusToEdge, distance);
-
-            const angle = Math.atan2(dy, dx);
-            const offsetX = Math.cos(angle) * clampedDistance;
-            const offsetY = Math.sin(angle) * clampedDistance;
-
-            const indicatorX = centerX + offsetX;
-            const indicatorY = centerY + offsetY;
-            drawJoystick(indicatorX, indicatorY);
-
-            // Normalize and apply dead zone
-            let jx = offsetX / radiusToEdge;
-            let jy = -offsetY / radiusToEdge; // up = positive
-
-            const deadZone = 0.1;
-            jx = Math.abs(jx) < deadZone ? 0 : jx;
-            jy = Math.abs(jy) < deadZone ? 0 : jy;
-
-            // 💡 Apply sensitivity adjustments
-            jx *= 0.5; // reduce left/right sensitivity
-            const outputScale = 0.8; // max output is 80% of full power
-
-            const left = Math.round((jy + jx) * 255 * outputScale);
-            const right = Math.round((jy - jx) * 255 * outputScale);
+            // Reduce left/right sensitivity and cap output
+            jx *= 0.5;
+            const max = 0.8;
+            const left = Math.round((jy + jx) * 255 * max);
+            const right = Math.round((jy - jx) * 255 * max);
 
             robot.setSpeed(left, right);
-        }
+        });
 
-        function resetJoystick() {
-            drawJoystick();
+        manager.on('end', () => {
             robot.setSpeed(0, 0);
-        }
-
-        joystick.addEventListener('mousemove', (event) => {
-            if (event.buttons === 1) {
-                updateJoystick(event.clientX, event.clientY);
-            }
         });
-
-        joystick.addEventListener('mouseup', resetJoystick);
-        joystick.addEventListener('mouseleave', resetJoystick);
-
-        joystick.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-        joystick.addEventListener('touchmove', (e) => {
-            for (const touch of e.touches) {
-                if (touch.target === joystick) {
-                    updateJoystick(touch.clientX, touch.clientY);
-                    e.preventDefault();
-                }
-            }
-        }, { passive: false });
-
-        joystick.addEventListener('touchend', resetJoystick);
-        joystick.addEventListener('touchcancel', resetJoystick);
-
-        window.addEventListener('resize', () => {
-            updateBaseParams();
-            drawJoystick();
-        });
-
-        if (screen.orientation?.addEventListener) {
-            screen.orientation.addEventListener('change', () => {
-                updateBaseParams();
-                drawJoystick();
-            });
-        }
-
-        updateBaseParams();
-        drawJoystick();
     }
 
     function setupServoControl(robot) {
-        const servoLeftEl = document.getElementById('servo-left')
-        const servoRightEl = document.getElementById('servo-right')
+        const servoLeftEl = document.getElementById('servo-left');
+        const servoRightEl = document.getElementById('servo-right');
 
-        servoLeftEl.value = localStorage.servoLeft || 0
-        servoRightEl.value = localStorage.servoRight || 0
-        robot.setServoLeft(servoLeftEl.value)
-        robot.setServoRight(servoRightEl.value)
+        servoLeftEl.value = localStorage.servoLeft || 0;
+        servoRightEl.value = localStorage.servoRight || 0;
+        robot.setServoLeft(servoLeftEl.value);
+        robot.setServoRight(servoRightEl.value);
 
         servoLeftEl.addEventListener('input', (e) => {
-            robot.setServoLeft(e.target.value)
-            localStorage.servoLeft = e.target.value
-        })
+            robot.setServoLeft(e.target.value);
+            localStorage.servoLeft = e.target.value;
+        });
         servoRightEl.addEventListener('input', (e) => {
-            robot.setServoRight(e.target.value)
-            localStorage.servoRight = e.target.value
-        })
-    }
-
-    function setupFullscreenControl() {
-        function requestFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen()
-            } else {
-                document.exitFullscreen()
-            }
-        }
-        document.body.addEventListener('dblclick', (event) => {
-            if (!document.fullscreenElement) requestFullscreen()
-        })
-        const fullscreenBtn = document.querySelector('.fullscreen-btn')
-        fullscreenBtn.addEventListener('click', requestFullscreen)
+            robot.setServoRight(e.target.value);
+            localStorage.servoRight = e.target.value;
+        });
     }
 
     function setupInvertButtons() {
         function set(key, value) {
-            if (value) localStorage[key] = 1
-            else delete localStorage[key]
+            if (value) localStorage[key] = 1;
+            else delete localStorage[key];
         }
         for (let key in invertCheckboxes) {
-            invertCheckboxes[key].checked = !!localStorage[`invert${key}`]
-            invertCheckboxes[key].onclick = function() {
-                set(`invert${key}`, this.checked)
-            }
+            invertCheckboxes[key].checked = !!localStorage[`invert${key}`];
+            invertCheckboxes[key].onclick = function () {
+                set(`invert${key}`, this.checked);
+            };
         }
     }
 
     function debug(...args) {
-        const div = document.createElement('div')
-        txt = args.map(a => a === undefined ? 'undefined' : (a === null ? 'null' : a.valueOf())).join('  ')
-        div.textContent = txt
-        debugEl.insertBefore(div, debugEl.firstChild)
+        const div = document.createElement('div');
+        div.textContent = args.map(a => a === undefined ? 'undefined' : (a === null ? 'null' : a.valueOf())).join('  ');
+        debugEl.insertBefore(div, debugEl.firstChild);
     }
 
     function debugClear() {
-        debugEl.innerHTML = ''
+        debugEl.innerHTML = '';
     }
 
-    const robot = new BLERobot()
-    function connectBLE() {
-        if (robot.connected) {
-            robot.disconnect()
+    async function checkRequirements() {
+        if (!navigator.bluetooth) {
+            debug("Jūsų naršyklė nepalaiko Bluetooth. Pabandykite su Google Chrome.");
+            return;
         }
-        robot.connect()
+        if (!await navigator.bluetooth.getAvailability()) {
+            debug("Nerastas Bluetooth įrenginys arba trūksta leidimo jį naudoti.");
+            return;
+        }
+        connectBtn.disabled = false;
+        debug("Labas! Spausk „Prisijungti“ ir prisijunk prie savo roboto.");
     }
 
-    checkRequirements()
-    setupServoControl(robot)
-    setupJoystick(robot)
-    setupFullscreenControl()
-    setupInvertButtons()
+    const robot = new BLERobot();
 
-    window.addEventListener("beforeunload", (event) => {
-        robot.disconnect()
-        debug('Bye bye')
-    })
+    function connectBLE() {
+        if (robot.connected) robot.disconnect();
+        robot.connect();
+    }
 
+    checkRequirements();
+    setupServoControl(robot);
+    setupJoystick(robot);
+    setupInvertButtons();
+
+    window.addEventListener("beforeunload", () => {
+        robot.disconnect();
+        debug('Bye bye');
+    });
 </script>
 </body>
 </html>
