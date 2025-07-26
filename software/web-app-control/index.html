@@ -71,12 +71,21 @@
         }
 
         /* Servo controls */
-        #servo-controls {
+        .servo-controls {
             display: flex;
-            gap: 40px;
+            gap: 26px;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 10px;
+            color: #FFA500;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
         }
 
-        #servo-controls input {
+        .servo-controls input {
             writing-mode: vertical-lr;
             height: 150px;
         }
@@ -119,6 +128,25 @@
             background: rgba(0, 0, 0, 0.7);
             padding: 8px;
             border-radius: 4px;
+        }
+
+        /* Sensitivity control */
+        #sensitivity-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 20px;
+            color: #FFA500;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        #sensitivity-control input {
+            writing-mode: vertical-lr;
+            height: 150px;
+            margin-top: 5px;
         }
 
         .connect-btn {
@@ -199,12 +227,17 @@
             }
 
             #joystick-zone {
-                order: 3;
+                order: 4;
+                align-self: center;
+            }
+
+            #sensitivity-control {
+                order: 2;
                 align-self: center;
             }
 
             .buttons {
-                order: 2;
+                order: 3;
                 align-self: center;
                 flex-direction: row;
                 gap: 20px;
@@ -231,12 +264,20 @@
             </div>
 
             <div class="controls">
-                <div id="servo-controls">
+                <div class="servo-controls">
+                    <div class="sensitivity-label">Servo <br/>#1</div>
                     <input type="range" value="0" min="0" max="180" step="1" id="servo-left">
+                </div>
+
+                <div class="servo-controls">
+                    <div class="sensitivity-label">Servo <br/>#2</div>
                     <input type="range" value="0" min="0" max="180" step="1" id="servo-right">
                 </div>
 
-                <div id="joystick-zone"></div>
+                <div id="sensitivity-control" class="servo-controls">
+                    <div class="sensitivity-label">L/R <br/>sensivity</div>
+                    <input type="range" value="0.7" min="0.1" max="1.0" step="0.1" id="joystick-sensitivity">
+                </div>
 
                 <div class="buttons">
                     <div class="invert-checkboxes">
@@ -248,6 +289,9 @@
                     </div>
                     <div class="cmd-status">M0,0</div>
                 </div>
+
+                <div id="joystick-zone"></div>
+
             </div>
         </div>
     </div>
@@ -355,7 +399,7 @@
 
             async _send() {
                 const cmd = `ML${this.left} MR${this.right} SL${this.servoLeft} SR${this.servoRight}`;
-                const cmdStatus = `ML${this.left.toString().padStart(4, ' ')} MR${this.right.toString().padStart(4, ' ')} SL${this.servoLeft.toString().padStart(3, ' ')} SR${this.servoRight.toString().padStart(3, ' ')}`;
+                const cmdStatus = `ML${this.left.toString().padStart(4, ' ')}\nMR${this.right.toString().padStart(4, ' ')}\nSL${this.servoLeft.toString().padStart(3, ' ')}\nSR${this.servoRight.toString().padStart(3, ' ')}`;
                 cmdStatusEl.textContent = cmdStatus;
 
                 if (this.connected) {
@@ -369,6 +413,15 @@
 
         function setupJoystick(robot) {
             const joystickZone = document.getElementById('joystick-zone');
+            const sensitivitySlider = document.getElementById('joystick-sensitivity');
+
+            // Initialize sensitivity slider from localStorage or default to 0.7
+            sensitivitySlider.value = localStorage.joystickSensitivity || 0.7;
+
+            // Save sensitivity value when changed
+            sensitivitySlider.addEventListener('input', (e) => {
+                localStorage.joystickSensitivity = e.target.value;
+            });
 
             // Prevent double-click zoom and selection
             joystickZone.addEventListener('dblclick', (e) => {
@@ -414,7 +467,7 @@
                 let jy = Math.sin(angle) * distance; // Y axis not inverted
 
                 // Reduce left/right sensitivity and cap output
-                jx *= 0.7;
+                jx *= parseFloat(sensitivitySlider.value);
                 const max = 1.0;
                 const left = Math.round((jy + jx) * 255 * max);
                 const right = Math.round((jy - jx) * 255 * max);
