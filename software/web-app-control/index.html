@@ -32,7 +32,8 @@
         }
         #servo-controls input {
             writing-mode: vertical-lr;
-            height: 30vh;
+            height: 60vh;
+            margin-left: 60px;
         }
         #joystick-zone {
             position: absolute;
@@ -220,9 +221,9 @@
         const manager = nipplejs.create({
             zone: document.getElementById('joystick-zone'),
             mode: 'static',
-            position: { right: '20px', bottom: '20px' },
+            position: { right: '160px', bottom: '160px' },
             color: 'white',
-            size: 150,
+            size: 300,
             restOpacity: 0.3,
         });
 
