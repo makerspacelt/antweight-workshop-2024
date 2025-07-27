@@ -261,6 +261,9 @@
             <div id="debug"></div>
             <div class="top-login">
                 <button disabled class="connect-btn btn" onclick="connectBLE()">Prisijungti</button>
+                <button class="connect-btn btn" onclick="toggleFullscreen()" style="margin-left: 10px;">
+                    <span id="fullscreen-icon">⛶</span>
+                </button>
             </div>
 
             <div class="controls">
@@ -562,6 +565,58 @@
         document.addEventListener('gesturestart', (e) => {
             e.preventDefault();
         }, { passive: false });
+
+        // Fullscreen functionality
+        function toggleFullscreen() {
+            const fullscreenIcon = document.getElementById('fullscreen-icon');
+
+            if (!document.fullscreenElement &&
+                !document.mozFullScreenElement &&
+                !document.webkitFullscreenElement &&
+                !document.msFullscreenElement) {
+                // Enter fullscreen
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                }
+                fullscreenIcon.textContent = '⛗';
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+                fullscreenIcon.textContent = '⛶';
+            }
+        }
+
+        // Update fullscreen icon when fullscreen state changes
+        document.addEventListener('fullscreenchange', updateFullscreenIcon);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+        document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+
+        function updateFullscreenIcon() {
+            const fullscreenIcon = document.getElementById('fullscreen-icon');
+            if (document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement) {
+                fullscreenIcon.textContent = '⛗';
+            } else {
+                fullscreenIcon.textContent = '⛶';
+            }
+        }
     </script>
 </body>
 </html>
