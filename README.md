@@ -6,9 +6,9 @@ DIY Antweight Robot designed for an inexpensive workshop that introduces
 soldering & robotics to beginners. It's fun to assemble in a group and then
 fight in an arena. The robot follows Lithuanian Antweight format - 200 g weight.
 
-The robot is controlled via a website, which uses the Web Bluetooth API to connect to ESP32.
-Best results with Google Chrome, works only in Android or laptops. Access the
-website here: https://makerspace.lt/antweight-workshop-2024/
+The robot is controlled via a website: https://makerspace.lt/antweight-workshop-2024/
+
+* Open the website using Use Google Chrome or a Chrome-based browser on Android. On iOS use the [Bluefy browser](https://apps.apple.com/us/app/bluefy-web-ble-browser/id1492822055). The website connects your phone to the robot's ESP32 microcontroller using the [Web Bluetooth API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API#browser_compatibility).
 
 Total cost of everything (if you source 1 cell lithium battery yourself) - around 15eur.
 
