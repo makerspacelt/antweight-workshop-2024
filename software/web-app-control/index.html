@@ -174,7 +174,9 @@ class BLERobot {
     }
 
     async _periodicSending() {
-        let delay = 0
+        // ~50 Hz when linked. writeValue (with response) was limited by BLE
+        // connection interval RTT; writeWithoutResponse keeps the pipe full.
+        let delay = 20
         try {
             if (!await this._send()) {
                 // not connected, slow down
@@ -241,7 +243,13 @@ class BLERobot {
 
         if (this.connected) {
             const data = this.encoder.encode(cmd);
-            await this.characteristic.writeValue(data)
+            // Prefer without-response (char supports it) — avoids waiting a full
+            // conn-interval RTT per packet. Fall back for stacks that lack it.
+            if (this.characteristic.properties.writeWithoutResponse) {
+                await this.characteristic.writeValueWithoutResponse(data)
+            } else {
+                await this.characteristic.writeValue(data)
+            }
             return true
         }
         return false
