@@ -111,6 +111,7 @@
                 Invert:
                 <label><input id="invert-ml" type="checkbox">ML</label>
                 <label><input id="invert-mr" type="checkbox">MR</label>
+                <label><input id="invert-tr" type="checkbox">TR</label>
                 <label><input id="invert-sl" type="checkbox">SL</label>
                 <label><input id="invert-sr" type="checkbox">SR</label>
             </span>
@@ -128,6 +129,7 @@ const debugEl = document.getElementById('debug')
 const invertCheckboxes = {
     ML: document.getElementById('invert-ml'),
     MR: document.getElementById('invert-mr'),
+    TR: document.getElementById('invert-tr'),
     SL: document.getElementById('invert-sl'),
     SR: document.getElementById('invert-sr'),
 }
@@ -314,14 +316,16 @@ function setupJoystick(robot) {
 
         let jx = (dx / radiusToEdge) * 255
         let jy = -(dy / radiusToEdge) * 255
+        if (localStorage.invertTR) jx = -jx
 
-        left = jy + jx
-        right = jy - jx
+        // Match remote / pad: left = drive - turn, right = drive + turn
+        left = jy - jx
+        right = jy + jx
         left = left * mag
         right = right * mag
         left = Math.max(-255, Math.min(255, Math.round(left)))
         right = Math.max(-255, Math.min(255, Math.round(right)))
-        
+
         robot.setSpeed(left, right)
         drawJoystick(x, y)
     }
